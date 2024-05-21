@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.*;
 
 class AntrianOperationPrac {
-    private static final String FILE_NAME = "antrian.txt";
+    private static final String FILE_NAME = "Java Operation File\\antrian.txt";
     
     public static void main(String[] args) {
         Queue<String> antrian = new LinkedList<>();
