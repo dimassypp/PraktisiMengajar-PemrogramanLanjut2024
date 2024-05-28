@@ -2,14 +2,21 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.io.*;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class todoManagement extends JFrame {
     private DefaultTableModel notCompletedModel;
     private DefaultTableModel completedModel;
     private JTextField taskInput;
     private static final String FILE_NAME = "todo.txt";
+    private LinkedList<String> notCompletedTasks;
+    private LinkedList<String> completedTasks;
 
     public todoManagement() {
+        notCompletedTasks = new LinkedList<>();
+        completedTasks = new LinkedList<>();
+
         setTitle("To-Do List Manager");
         setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -105,6 +112,7 @@ public class todoManagement extends JFrame {
     private void addTask() {
         String task = taskInput.getText().trim();
         if (!task.isEmpty()) {
+            notCompletedTasks.add(task);
             notCompletedModel.addRow(new Object[]{task});
             saveTasks();
             taskInput.setText("");
@@ -115,13 +123,14 @@ public class todoManagement extends JFrame {
 
     private void completeTask(int selectedRow) {
         if (selectedRow == -1 && notCompletedModel.getRowCount() > 0) {
-            // If no task is selected, complete the first task in the list
-            selectedRow = 0;
+            selectedRow = 0; // If no task is selected, complete the first task in the list
         }
 
         if (selectedRow != -1) {
             String task = (String) notCompletedModel.getValueAt(selectedRow, 0);
+            notCompletedTasks.remove(task);
             notCompletedModel.removeRow(selectedRow);
+            completedTasks.add(task);
             completedModel.addRow(new Object[]{task});
             saveTasks();
         } else {
@@ -132,6 +141,7 @@ public class todoManagement extends JFrame {
     private void cleanHistory() {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to clean the history?", "Confirm Clean History", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
+            completedTasks.clear();
             int rowCount = completedModel.getRowCount();
             for (int i = rowCount - 1; i >= 0; i--) {
                 completedModel.removeRow(i);
@@ -143,12 +153,12 @@ public class todoManagement extends JFrame {
     private void saveTasks() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
             writer.write("NotCompleted\n");
-            for (int i = 0; i < notCompletedModel.getRowCount(); i++) {
-                writer.write(notCompletedModel.getValueAt(i, 0) + "\n");
+            for (String task : notCompletedTasks) {
+                writer.write(task + "\n");
             }
             writer.write("Completed\n");
-            for (int i = 0; i < completedModel.getRowCount(); i++) {
-                writer.write(completedModel.getValueAt(i, 0) + "\n");
+            for (String task : completedTasks) {
+                writer.write(task + "\n");
             }
             System.out.println("Tasks saved to file.");
         } catch (IOException e) {
@@ -168,8 +178,10 @@ public class todoManagement extends JFrame {
                     readingNotCompleted = false;
                 } else if (!line.isEmpty()) {
                     if (readingNotCompleted) {
+                        notCompletedTasks.add(line);
                         notCompletedModel.addRow(new Object[]{line});
                     } else {
+                        completedTasks.add(line);
                         completedModel.addRow(new Object[]{line});
                     }
                 }
